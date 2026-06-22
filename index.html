@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>2026 FIFA World Cup Simulator</title>
+  <meta name="description" content="2026 FIFA 월드컵 경기 결과 AI 시뮬레이터" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* ── 테마 변수 ── */
+    .shorts-wrap {
+      --bg: #0a0a0f;
+      --text1: #ffffff;
+      --text2: rgba(255,255,255,0.6);
+      --text3: rgba(255,255,255,0.28);
+      --overlay1: rgba(8,8,15,0.48);
+      --overlay2: rgba(8,8,15,0.32);
+      --overlay3: rgba(8,8,15,0.6);
+      --overlay4: rgba(8,8,15,0.97);
+      --card-bg: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.08);
+      --badge-bg: rgba(255,255,255,0.08);
+      --badge-border: rgba(255,255,255,0.14);
+      --btn-bg: #ffffff;
+      --btn-text: #0a0a0f;
+      --sp-active: rgba(255,255,255,0.18);
+      --sp-active-border: rgba(255,255,255,0.45);
+      --sp-text: rgba(255,255,255,0.32);
+      --sp-border: rgba(255,255,255,0.14);
+      --tl-bg: rgba(255,255,255,0.08);
+      --tl-fill: rgba(255,255,255,0.45);
+      --vs-text: rgba(255,255,255,0.18);
+      --vs-line: rgba(255,255,255,0.1);
+      --ht-border: rgba(255,255,255,0.08);
+      --ht-text: rgba(255,255,255,0.2);
+      --flag-opacity: 0.22;
+      --flag-divider: rgba(255,255,255,0.07);
+      --change-border: rgba(255,255,255,0.14);
+      --change-text: rgba(255,255,255,0.35);
+      --toggle-bg: rgba(255,255,255,0.1);
+      --toggle-border: rgba(255,255,255,0.2);
+      --toggle-active: #ffffff;
+      --toggle-active-text: #0a0a0f;
+      --toggle-idle-text: rgba(255,255,255,0.45);
+      --hook-shadow: 0 2px 14px rgba(0,0,0,0.95);
+      --score-shadow: 0 2px 24px rgba(0,0,0,0.9);
+    }
+    .shorts-wrap.light {
+      --bg: #f0f2f5;
+      --text1: #0d0d14;
+      --text2: rgba(0,0,0,0.6);
+      --text3: rgba(0,0,0,0.32);
+      --overlay1: rgba(240,242,245,0.38);
+      --overlay2: rgba(240,242,245,0.22);
+      --overlay3: rgba(240,242,245,0.55);
+      --overlay4: rgba(240,242,245,0.97);
+      --card-bg: rgba(0,0,0,0.05);
+      --card-border: rgba(0,0,0,0.09);
+      --badge-bg: rgba(0,0,0,0.07);
+      --badge-border: rgba(0,0,0,0.12);
+      --btn-bg: #0d0d14;
+      --btn-text: #ffffff;
+      --sp-active: rgba(0,0,0,0.15);
+      --sp-active-border: rgba(0,0,0,0.4);
+      --sp-text: rgba(0,0,0,0.35);
+      --sp-border: rgba(0,0,0,0.14);
+      --tl-bg: rgba(0,0,0,0.1);
+      --tl-fill: rgba(0,0,0,0.45);
+      --vs-text: rgba(0,0,0,0.18);
+      --vs-line: rgba(0,0,0,0.1);
+      --ht-border: rgba(0,0,0,0.1);
+      --ht-text: rgba(0,0,0,0.28);
+      --flag-opacity: 0.28;
+      --flag-divider: rgba(0,0,0,0.08);
+      --change-border: rgba(0,0,0,0.14);
+      --change-text: rgba(0,0,0,0.38);
+      --toggle-bg: rgba(0,0,0,0.08);
+      --toggle-border: rgba(0,0,0,0.16);
+      --toggle-active: #0d0d14;
+      --toggle-active-text: #ffffff;
+      --toggle-idle-text: rgba(0,0,0,0.4);
+      --hook-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      --score-shadow: 0 2px 16px rgba(0,0,0,0.15);
+    }
+
+    .shorts-wrap {
+      width: 100%;
+      max-width: 390px;
+      height: 100vh;
+      max-height: 844px;
+      position: relative;
+      background: var(--bg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.4s ease;
+    }
+
+    @media (max-width: 390px) {
+      .shorts-wrap { max-height: 100vh; border-radius: 0; }
+      body { background: var(--bg); }
+    }
+
+    /* 국기 배경 */
+    .flag-bg { position: absolute; inset: 0; display: flex; z-index: 0; }
+    .flag-half { flex: 1; display: flex; align-items: center; overflow: hidden; position: relative; }
+    .flag-half.left { justify-content: flex-end; }
+    .flag-half.right { justify-content: flex-start; }
+    .flag-emoji-bg {
+      font-size: 240px; line-height: 1; position: absolute;
+      opacity: var(--flag-opacity); pointer-events: none; user-select: none; transition: opacity 0.4s;
+    }
+    .flag-half.left .flag-emoji-bg { right: -30px; }
+    .flag-half.right .flag-emoji-bg { left: -30px; }
+    .flag-bg-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(to bottom, var(--overlay1) 0%, var(--overlay2) 35%, var(--overlay3) 65%, var(--overlay4) 100%);
+      transition: background 0.4s;
+    }
+    .flag-bg-divider {
+      position: absolute; top: 0; bottom: 0; left: 50%; width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--flag-divider), transparent); z-index: 2;
+    }
+
+    /* 테마 토글 */
+    .theme-toggle {
+      display: flex; align-items: center;
+      background: var(--toggle-bg);
+      border: 0.5px solid var(--toggle-border);
+      border-radius: 999px; padding: 3px;
+      transition: all 0.3s;
+    }
+    .theme-btn {
+      padding: 5px 14px; font-size: 11px; font-weight: 600;
+      border-radius: 999px; border: none; cursor: pointer;
+      background: transparent; color: var(--toggle-idle-text);
+      letter-spacing: 0.04em; transition: all 0.25s;
+    }
+    .theme-btn.active {
+      background: var(--toggle-active);
+      color: var(--toggle-active-text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+
+    /* 인트로 */
+    .screen-intro {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
+      padding: 48px 20px 36px; z-index: 10;
+      transition: opacity 0.5s ease;
+    }
+    .screen-intro.hidden { opacity: 0; pointer-events: none; }
+
+    .intro-top { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+    .intro-wc-badge {
+      font-size: 10px; letter-spacing: 0.14em; color: var(--text2);
+      text-transform: uppercase; background: var(--badge-bg);
+      padding: 4px 14px; border-radius: 999px; border: 0.5px solid var(--badge-border);
+    }
+
+    .intro-hook { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+    .hook-top { font-size: 13px; font-weight: 600; color: var(--text2); letter-spacing: 0.06em; }
+    .hook-main { font-size: 28px; font-weight: 800; color: var(--text1); line-height: 1.15; text-shadow: var(--hook-shadow); }
+    .hook-main .hl { color: #FFD700; }
+    .hook-sub { font-size: 12px; color: var(--text3); letter-spacing: 0.04em; }
+
+    .intro-teams { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .intro-team {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      cursor: pointer; padding: 16px 8px; border-radius: 14px; transition: background 0.15s;
+    }
+    .intro-team:hover { background: var(--card-bg); }
+    .intro-flag-lg { font-size: 76px; line-height: 1; filter: drop-shadow(0 6px 20px rgba(0,0,0,0.35)); transition: transform 0.2s; }
+    .intro-team:hover .intro-flag-lg { transform: scale(1.06); }
+    .intro-tname { font-size: 14px; font-weight: 700; color: var(--text1); text-shadow: var(--hook-shadow); text-align: center; }
+    .intro-trank { font-size: 11px; color: var(--text3); }
+    .intro-edit { font-size: 10px; color: var(--text3); letter-spacing: 0.06em; margin-top: 1px; }
+    .intro-vs-col { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 12px; }
+    .vs-text { font-size: 14px; font-weight: 700; color: var(--vs-text); letter-spacing: 0.1em; }
+    .vs-line { width: 0.5px; height: 50px; background: var(--vs-line); }
+
+    .intro-bottom { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+    .intro-caption { font-size: 11px; color: var(--text3); letter-spacing: 0.04em; text-align: center; }
+    .btn-start {
+      width: 100%; padding: 17px; font-size: 16px; font-weight: 700;
+      border-radius: 999px; border: none; background: var(--btn-bg); color: var(--btn-text);
+      cursor: pointer; letter-spacing: 0.04em; transition: all 0.25s;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    }
+    .btn-start:active { transform: scale(0.97); }
+
+    /* 시뮬 */
+    .screen-sim {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease; overflow: hidden; z-index: 10;
+    }
+    .screen-sim.visible { opacity: 1; pointer-events: all; }
+    .sim-overlay {
+      position: absolute; inset: 0; z-index: 0;
+      background: linear-gradient(to bottom, var(--overlay1) 0%, var(--overlay2) 30%, var(--overlay3) 60%, var(--overlay4) 100%);
+      transition: background 0.4s;
+    }
+
+    .sim-hook { position: relative; z-index: 2; width: 100%; padding: 52px 18px 0; display: flex; flex-direction: column; gap: 3px; }
+    .sim-hook-top { font-size: 19px; font-weight: 800; color: var(--text1); text-shadow: var(--hook-shadow); line-height: 1.2; }
+    .sim-hook-top .hl { color: #FFD700; }
+    .sim-hook-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.04em; }
+
+    .sim-score-area { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 100%; padding: 24px 12px 10px; }
+    .sim-team-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+    .sim-flag { font-size: 42px; line-height: 1; }
+    .sim-tname { font-size: 12px; font-weight: 700; color: var(--text2); text-align: center; }
+    .sim-score-col { display: flex; align-items: center; gap: 4px; padding: 0 12px; }
+    .score-big {
+      font-size: 76px; font-weight: 800; color: var(--text1);
+      min-width: 64px; text-align: center; line-height: 1; text-shadow: var(--score-shadow);
+    }
+    .score-big.pop { animation: bigpop 0.4s ease; }
+    @keyframes bigpop {
+      0%   { transform: scale(1); }
+      35%  { transform: scale(1.35); color: #FFD700; text-shadow: 0 0 28px rgba(255,215,0,0.7); }
+      100% { transform: scale(1); }
+    }
+    .score-sep { font-size: 32px; color: var(--vs-text); }
+
+    .sim-controls { position: relative; z-index: 2; width: calc(100% - 32px); margin: 0 16px 10px; display: flex; flex-direction: column; gap: 8px; }
+    .speed-row { display: flex; align-items: center; gap: 8px; }
+    .speed-label { font-size: 10px; color: var(--text3); letter-spacing: 0.06em; white-space: nowrap; }
+    .speed-btns { display: flex; gap: 4px; }
+    .sp-btn {
+      padding: 4px 11px; font-size: 10px; font-weight: 700;
+      border-radius: 999px; border: 0.5px solid var(--sp-border);
+      background: transparent; color: var(--sp-text); cursor: pointer; transition: all 0.15s;
+    }
+    .sp-btn.active { background: var(--sp-active); color: var(--text1); border-color: var(--sp-active-border); }
+    .sp-btn:hover:not(.active) { background: var(--card-bg); }
+    .tl-row { display: flex; justify-content: space-between; align-items: center; }
+    .tl-min { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.06em; }
+    .tl-bar { width: 100%; height: 3px; background: var(--tl-bg); border-radius: 999px; overflow: hidden; }
+    .tl-fill { height: 100%; width: 0%; background: var(--tl-fill); border-radius: 999px; }
+
+    .sim-log {
+      position: relative; z-index: 2;
+      width: calc(100% - 32px); margin: 0 16px;
+      display: flex; flex-direction: column; gap: 5px;
+      flex: 1; overflow: hidden;
+    }
+    .ev {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      border-radius: 10px; background: var(--card-bg); border: 0.5px solid var(--card-border);
+      animation: slideUp 0.3s ease; font-size: 13px; color: var(--text1);
+    }
+    .ev.home { border-left: 2.5px solid #4A90D9; }
+    .ev.away { border-left: 2.5px solid #E07A4A; }
+    .ev.ht {
+      border-left: none; justify-content: center; color: var(--ht-text);
+      font-size: 11px; letter-spacing: 0.1em; background: transparent;
+      border-style: dashed; border-color: var(--ht-border);
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .ev-min { font-size: 11px; color: var(--text3); min-width: 26px; font-weight: 600; }
+    .ev-ico { font-size: 15px; }
+    .ev-desc { flex: 1; }
+
+    .sim-result {
+      position: relative; z-index: 2; font-size: 15px; font-weight: 700;
+      padding: 10px 20px; border-radius: 999px; letter-spacing: 0.05em;
+      display: none; margin: 10px 16px 0; text-align: center;
+    }
+    .sim-result.hw { background: rgba(74,144,217,0.15); color: #7BB8F5; border: 0.5px solid rgba(74,144,217,0.3); }
+    .sim-result.aw { background: rgba(224,122,74,0.15); color: #F5A07B; border: 0.5px solid rgba(224,122,74,0.3); }
+    .sim-result.dr { background: var(--card-bg); color: var(--text2); border: 0.5px solid var(--card-border); }
+    .shorts-wrap.light .sim-result.hw { color: #2a6db5; }
+    .shorts-wrap.light .sim-result.aw { color: #b55820; }
+
+    .sim-footer {
+      position: relative; z-index: 2; width: 100%;
+      padding: 8px 16px 32px;
+      display: flex; flex-direction: column; gap: 6px;
+      background: linear-gradient(to top, var(--bg) 65%, transparent);
+      margin-top: auto; transition: background 0.4s;
+    }
+    .btn-again {
+      width: 100%; padding: 15px; font-size: 15px; font-weight: 700;
+      border-radius: 999px; border: none; background: var(--btn-bg); color: var(--btn-text);
+      cursor: pointer; letter-spacing: 0.04em; transition: all 0.25s; display: none;
+    }
+    .btn-again:active { transform: scale(0.97); }
+    .btn-change {
+      width: 100%; padding: 10px; font-size: 12px; font-weight: 500;
+      border-radius: 999px; border: 0.5px solid var(--change-border);
+      background: transparent; color: var(--change-text); cursor: pointer; transition: all 0.15s; display: none;
+    }
+    .btn-change:hover { background: var(--card-bg); }
+    .sim-theme-row { display: flex; justify-content: center; padding-top: 2px; }
+
+    /* 시트 */
+    .sheet-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.75); z-index: 300;
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .sheet-overlay.open { display: flex; }
+    .sheet {
+      background: #16161e; border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px; max-height: 72vh;
+      display: flex; flex-direction: column;
+      border-top: 0.5px solid rgba(255,255,255,0.1);
+    }
+    .sh-head { padding: 14px 16px 8px; border-bottom: 0.5px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px; }
+    .sh-ttl { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.7); flex: 1; }
+    .sh-x { background: none; border: none; cursor: pointer; font-size: 18px; color: rgba(255,255,255,0.3); padding: 4px; }
+    .sh-input {
+      margin: 8px 14px; padding: 9px 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.1);
+      font-size: 14px; color: #fff; outline: none; width: calc(100% - 28px);
+    }
+    .sh-input::placeholder { color: rgba(255,255,255,0.25); }
+    .tlist { overflow-y: auto; padding: 0 6px 2rem; }
+    .grp-lbl { font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 0.12em; padding: 8px 8px 3px; text-transform: uppercase; }
+    .t-opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background 0.1s; font-size: 14px; color: rgba(255,255,255,0.75); }
+    .t-opt:hover { background: rgba(255,255,255,0.07); }
+    .t-rnk { font-size: 11px; color: rgba(255,255,255,0.25); margin-left: auto; }
+  </style>
+</head>
+<body>
+<div class="shorts-wrap" id="shorts-wrap">
+
+  <!-- 국기 배경 -->
+  <div class="flag-bg">
+    <div class="flag-half left"><span class="flag-emoji-bg" id="bg-hf">🇰🇷</span></div>
+    <div class="flag-half right"><span class="flag-emoji-bg" id="bg-af">🇿🇦</span></div>
+    <div class="flag-bg-overlay"></div>
+    <div class="flag-bg-divider"></div>
+  </div>
+
+  <!-- 인트로 -->
+  <div class="screen-intro" id="screen-intro">
+    <div class="intro-top">
+      <span class="intro-wc-badge">2026 FIFA World Cup · Simulator</span>
+    </div>
+    <div class="intro-hook">
+      <span class="hook-top">과연 이 경기의 결과는?</span>
+      <div class="hook-main">
+        <span class="hl" id="intro-hs">대한민국</span> vs <span class="hl" id="intro-as">남아공</span>
+      </div>
+      <span class="hook-sub">AI 확률 기반 실시간 경기 시뮬레이션 ⚽</span>
+    </div>
+    <div class="intro-teams">
+      <div class="intro-team" onclick="openPicker('home')">
+        <span class="intro-flag-lg" id="intro-hf">🇰🇷</span>
+        <span class="intro-tname" id="intro-hn">대한민국</span>
+        <span class="intro-trank" id="intro-hr">FIFA 25위</span>
+        <span class="intro-edit">탭하여 변경</span>
+      </div>
+      <div class="intro-vs-col">
+        <span class="vs-text">VS</span>
+        <div class="vs-line"></div>
+      </div>
+      <div class="intro-team" onclick="openPicker('away')">
+        <span class="intro-flag-lg" id="intro-af">🇿🇦</span>
+        <span class="intro-tname" id="intro-an">남아공</span>
+        <span class="intro-trank" id="intro-ar">FIFA 56위</span>
+        <span class="intro-edit">탭하여 변경</span>
+      </div>
+    </div>
+    <div class="intro-bottom">
+      <span class="intro-caption">👇 버튼을 눌러 결과를 확인하세요</span>
+      <button class="btn-start" onclick="goSim()">⚽ 경기 시뮬레이션 시작!</button>
+      <div class="theme-toggle">
+        <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')">🌙 다크</button>
+        <button class="theme-btn" id="btn-light" onclick="setTheme('light')">☀️ 라이트</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 시뮬 -->
+  <div class="screen-sim" id="screen-sim">
+    <div class="sim-overlay"></div>
+    <div class="sim-hook">
+      <div class="sim-hook-top"><span class="hl" id="sim-hs">대한민국</span> vs <span class="hl" id="sim-as">남아공</span> — 결과는?</div>
+      <div class="sim-hook-sub">AI 확률 기반 실시간 시뮬레이션</div>
+    </div>
+    <div class="sim-score-area">
+      <div class="sim-team-col">
+        <span class="sim-flag" id="sim-hf">🇰🇷</span>
+        <span class="sim-tname" id="sim-hn">대한민국</span>
+      </div>
+      <div class="sim-score-col">
+        <span class="score-big" id="home-score">0</span>
+        <span class="score-sep">:</span>
+        <span class="score-big" id="away-score">0</span>
+      </div>
+      <div class="sim-team-col">
+        <span class="sim-flag" id="sim-af">🇿🇦</span>
+        <span class="sim-tname" id="sim-an">남아공</span>
+      </div>
+    </div>
+    <div class="sim-controls">
+      <div class="speed-row">
+        <span class="speed-label">배속</span>
+        <div class="speed-btns">
+          <button class="sp-btn active" onclick="setSpeed(1,this)">1×</button>
+          <button class="sp-btn" onclick="setSpeed(2,this)">2×</button>
+          <button class="sp-btn" onclick="setSpeed(4,this)">4×</button>
+          <button class="sp-btn" onclick="setSpeed(8,this)">8×</button>
+        </div>
+      </div>
+      <div class="tl-row">
+        <span class="tl-min" id="min-txt">킥오프 대기</span>
+        <span class="tl-min">90'</span>
+      </div>
+      <div class="tl-bar"><div class="tl-fill" id="tl-fill"></div></div>
+    </div>
+    <div class="sim-log" id="sim-log"></div>
+    <div class="sim-result" id="sim-result"></div>
+    <div class="sim-footer">
+      <button class="btn-again" id="btn-again" onclick="goSim()">🔄 다시 시뮬레이션</button>
+      <button class="btn-change" id="btn-change" onclick="goIntro()">← 팀 변경하기</button>
+      <div class="sim-theme-row">
+        <div class="theme-toggle">
+          <button class="theme-btn active" id="btn-dark2" onclick="setTheme('dark')">🌙 다크</button>
+          <button class="theme-btn" id="btn-light2" onclick="setTheme('light')">☀️ 라이트</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 팀 선택 시트 -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeOut(event)">
+  <div class="sheet">
+    <div class="sh-head">
+      <span class="sh-ttl" id="sh-ttl">팀 선택</span>
+      <button class="sh-x" onclick="closeSheet()">✕</button>
+    </div>
+    <input class="sh-input" id="sh-input" placeholder="팀 이름 검색..." oninput="filterList(this.value)" />
+    <div class="tlist" id="tlist"></div>
+  </div>
+</div>
+
+<script>
+const TEAMS = [
+  {g:'A',flag:'🇲🇽',name:'멕시코',en:'Mexico',rank:15},
+  {g:'A',flag:'🇿🇦',name:'남아공',en:'SouthAfrica',rank:56},
+  {g:'A',flag:'🇰🇷',name:'대한민국',en:'SouthKorea',rank:25},
+  {g:'A',flag:'🇨🇿',name:'체코',en:'Czechia',rank:41},
+  {g:'B',flag:'🇨🇦',name:'캐나다',en:'Canada',rank:30},
+  {g:'B',flag:'🇧🇦',name:'보스니아',en:'Bosnia',rank:62},
+  {g:'B',flag:'🇶🇦',name:'카타르',en:'Qatar',rank:35},
+  {g:'B',flag:'🇨🇭',name:'스위스',en:'Switzerland',rank:19},
+  {g:'C',flag:'🇧🇷',name:'브라질',en:'Brazil',rank:6},
+  {g:'C',flag:'🇲🇦',name:'모로코',en:'Morocco',rank:8},
+  {g:'C',flag:'🇭🇹',name:'아이티',en:'Haiti',rank:92},
+  {g:'C',flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',name:'스코틀랜드',en:'Scotland',rank:47},
+  {g:'D',flag:'🇺🇸',name:'미국',en:'USA',rank:16},
+  {g:'D',flag:'🇵🇾',name:'파라과이',en:'Paraguay',rank:55},
+  {g:'D',flag:'🇦🇺',name:'호주',en:'Australia',rank:26},
+  {g:'D',flag:'🇹🇷',name:'튀르키예',en:'Turkiye',rank:42},
+  {g:'E',flag:'🇩🇪',name:'독일',en:'Germany',rank:10},
+  {g:'E',flag:'🇨🇼',name:'퀴라소',en:'Curacao',rank:85},
+  {g:'E',flag:'🇨🇮',name:'코트디부아르',en:'IvoryCoast',rank:33},
+  {g:'E',flag:'🇪🇨',name:'에콰도르',en:'Ecuador',rank:24},
+  {g:'F',flag:'🇳🇱',name:'네덜란드',en:'Netherlands',rank:7},
+  {g:'F',flag:'🇯🇵',name:'일본',en:'Japan',rank:18},
+  {g:'F',flag:'🇸🇪',name:'스웨덴',en:'Sweden',rank:39},
+  {g:'F',flag:'🇹🇳',name:'튀니지',en:'Tunisia',rank:40},
+  {g:'G',flag:'🇧🇪',name:'벨기에',en:'Belgium',rank:9},
+  {g:'G',flag:'🇪🇬',name:'이집트',en:'Egypt',rank:29},
+  {g:'G',flag:'🇮🇷',name:'이란',en:'Iran',rank:21},
+  {g:'G',flag:'🇳🇿',name:'뉴질랜드',en:'NewZealand',rank:90},
+  {g:'H',flag:'🇪🇸',name:'스페인',en:'Spain',rank:2},
+  {g:'H',flag:'🇨🇻',name:'카보베르데',en:'CapeVerde',rank:78},
+  {g:'H',flag:'🇸🇦',name:'사우디아라비아',en:'SaudiArabia',rank:57},
+  {g:'H',flag:'🇺🇾',name:'우루과이',en:'Uruguay',rank:17},
+  {g:'I',flag:'🇫🇷',name:'프랑스',en:'France',rank:1},
+  {g:'I',flag:'🇸🇳',name:'세네갈',en:'Senegal',rank:14},
+  {g:'I',flag:'🇮🇶',name:'이라크',en:'Iraq',rank:63},
+  {g:'I',flag:'🇳🇴',name:'노르웨이',en:'Norway',rank:44},
+  {g:'J',flag:'🇦🇷',name:'아르헨티나',en:'Argentina',rank:3},
+  {g:'J',flag:'🇩🇿',name:'알제리',en:'Algeria',rank:36},
+  {g:'J',flag:'🇦🇹',name:'오스트리아',en:'Austria',rank:23},
+  {g:'J',flag:'🇯🇴',name:'요르단',en:'Jordan',rank:71},
+  {g:'K',flag:'🇵🇹',name:'포르투갈',en:'Portugal',rank:5},
+  {g:'K',flag:'🇨🇩',name:'콩고민주공화국',en:'DRCongo',rank:51},
+  {g:'K',flag:'🇺🇿',name:'우즈베키스탄',en:'Uzbekistan',rank:68},
+  {g:'K',flag:'🇨🇴',name:'콜롬비아',en:'Colombia',rank:13},
+  {g:'L',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'잉글랜드',en:'England',rank:4},
+  {g:'L',flag:'🇭🇷',name:'크로아티아',en:'Croatia',rank:11},
+  {g:'L',flag:'🇬🇭',name:'가나',en:'Ghana',rank:60},
+  {g:'L',flag:'🇵🇦',name:'파나마',en:'Panama',rank:72},
+];
+
+const seen = new Set(); const TU = [];
+TEAMS.forEach(t => { if (!seen.has(t.en)) { seen.add(t.en); TU.push(t); } });
+
+let home = TU.find(t => t.en === 'SouthKorea');
+let away = TU.find(t => t.en === 'SouthAfrica');
+let pickerTarget = 'home';
+let running = false;
+let speedMult = 1;
+let rafId = null;
+let matchStartTime = null;
+let matchElapsed = 0;
+
+function setTheme(t) {
+  document.getElementById('shorts-wrap').classList.toggle('light', t === 'light');
+  ['btn-dark','btn-dark2'].forEach(id => document.getElementById(id).classList.toggle('active', t === 'dark'));
+  ['btn-light','btn-light2'].forEach(id => document.getElementById(id).classList.toggle('active', t === 'light'));
+}
+
+function updateAllUI() {
+  document.getElementById('bg-hf').textContent = home.flag;
+  document.getElementById('bg-af').textContent = away.flag;
+  document.getElementById('intro-hf').textContent = home.flag;
+  document.getElementById('intro-hn').textContent = home.name;
+  document.getElementById('intro-hr').textContent = 'FIFA ' + home.rank + '위';
+  document.getElementById('intro-af').textContent = away.flag;
+  document.getElementById('intro-an').textContent = away.name;
+  document.getElementById('intro-ar').textContent = 'FIFA ' + away.rank + '위';
+  document.getElementById('intro-hs').textContent = home.name;
+  document.getElementById('intro-as').textContent = away.name;
+  document.getElementById('sim-hf').textContent = home.flag;
+  document.getElementById('sim-hn').textContent = home.name;
+  document.getElementById('sim-af').textContent = away.flag;
+  document.getElementById('sim-an').textContent = away.name;
+  document.getElementById('sim-hs').textContent = home.name;
+  document.getElementById('sim-as').textContent = away.name;
+}
+
+function setSpeed(s, btn) {
+  if (matchStartTime !== null) {
+    matchElapsed += (performance.now() - matchStartTime) * speedMult;
+    matchStartTime = performance.now();
+  }
+  speedMult = s;
+  document.querySelectorAll('.sp-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function goIntro() {
+  document.getElementById('screen-sim').classList.remove('visible');
+  document.getElementById('screen-intro').classList.remove('hidden');
+  document.getElementById('btn-again').style.display = 'none';
+  document.getElementById('btn-change').style.display = 'none';
+  document.getElementById('sim-result').style.display = 'none';
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+}
+
+function goSim() {
+  if (running) return;
+  document.getElementById('screen-intro').classList.add('hidden');
+  document.getElementById('screen-sim').classList.add('visible');
+  speedMult = 1;
+  document.querySelectorAll('.sp-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  runMatch();
+}
+
+function strength(r) { if (r<=5) return 5; if (r<=15) return 4; if (r<=30) return 3; if (r<=50) return 2; return 1; }
+function gwt(s) {
+  return {
+    5:[0,0,1,1,1,1,2,2,2,3,3,4],
+    4:[0,0,0,1,1,1,1,2,2,2,3,4],
+    3:[0,0,0,0,1,1,1,1,2,2,3],
+    2:[0,0,0,0,0,1,1,1,1,2],
+    1:[0,0,0,0,0,0,1,1,1]
+  }[s];
+}
+function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+function runMatch() {
+  running = true;
+  if (rafId) cancelAnimationFrame(rafId);
+  ['home-score','away-score'].forEach(id => document.getElementById(id).textContent = '0');
+  document.getElementById('sim-log').innerHTML = '';
+  document.getElementById('sim-result').style.display = 'none';
+  document.getElementById('btn-again').style.display = 'none';
+  document.getElementById('btn-change').style.display = 'none';
+  document.getElementById('tl-fill').style.width = '0%';
+  document.getElementById('min-txt').textContent = '';
+
+  const hs = rnd(gwt(strength(home.rank)));
+  const as = rnd(gwt(strength(away.rank)));
+  const evs = [], used = new Set();
+  function rm(lo, hi) { let m, t=0; do { m = Math.floor(Math.random()*(hi-lo+1))+lo; t++; } while (used.has(m) && t<50); used.add(m); return m; }
+  for (let i=0; i<hs; i++) evs.push({min:rm(1,90), team:'home', flag:home.flag, name:home.name});
+  for (let i=0; i<as; i++) evs.push({min:rm(1,90), team:'away', flag:away.flag, name:away.name});
+  evs.sort((a,b) => a.min - b.min);
+
+  let hc=0, ac=0, ei=0, htDone=false;
+  const BASE = 20000;
+  matchElapsed = 0; matchStartTime = performance.now();
+
+  function tick(now) {
+    const game = matchElapsed + (now - matchStartTime) * speedMult;
+    const prog = Math.min(game / BASE, 1);
+    const min = Math.min(Math.floor((game / BASE) * 90) + 1, 90);
+    document.getElementById('tl-fill').style.width = (prog * 100) + '%';
+    document.getElementById('min-txt').textContent = min < 90 ? min + "'" : "90'";
+    if (!htDone && min >= 45) { htDone = true; addEv('ht', null); }
+    while (ei < evs.length && evs[ei].min <= min) {
+      const ev = evs[ei];
+      if (ev.team === 'home') hc++; else ac++;
+      const sel = document.getElementById(ev.team === 'home' ? 'home-score' : 'away-score');
+      sel.textContent = ev.team === 'home' ? hc : ac;
+      sel.classList.remove('pop'); void sel.offsetWidth; sel.classList.add('pop');
+      addEv(ev.team, ev); ei++;
+    }
+    if (prog < 1) { rafId = requestAnimationFrame(tick); }
+    else { matchStartTime = null; finish(hs, as); }
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function addEv(type, ev) {
+  const log = document.getElementById('sim-log');
+  const el = document.createElement('div');
+  if (type === 'ht') { el.className = 'ev ht'; el.textContent = '— 하프타임 —'; }
+  else { el.className = 'ev ' + type; el.innerHTML = `<span class="ev-min">${ev.min}'</span><span class="ev-ico">⚽</span><span class="ev-desc">${ev.flag} ${ev.name} <strong>골!</strong></span>`; }
+  log.appendChild(el); log.scrollTop = log.scrollHeight;
+}
+
+function finish(h, a) {
+  running = false;
+  document.getElementById('min-txt').textContent = '경기 종료 ⏱';
+  const b = document.getElementById('sim-result');
+  if (h > a) { b.textContent = home.flag + ' ' + home.name + ' 승!'; b.className = 'sim-result hw'; }
+  else if (a > h) { b.textContent = away.flag + ' ' + away.name + ' 승!'; b.className = 'sim-result aw'; }
+  else { b.textContent = '무승부  ' + h + ' : ' + a; b.className = 'sim-result dr'; }
+  b.style.display = 'block';
+  document.getElementById('btn-again').style.display = 'block';
+  document.getElementById('btn-change').style.display = 'block';
+}
+
+function openPicker(t) {
+  pickerTarget = t;
+  document.getElementById('sh-ttl').textContent = t === 'home' ? '홈팀 선택' : '원정팀 선택';
+  document.getElementById('sh-input').value = ''; renderList('');
+  document.getElementById('sheet-overlay').classList.add('open');
+}
+function closeSheet() { document.getElementById('sheet-overlay').classList.remove('open'); }
+function closeOut(e) { if (e.target === document.getElementById('sheet-overlay')) closeSheet(); }
+function filterList(v) { renderList(v.toLowerCase()); }
+function renderList(f) {
+  const el = document.getElementById('tlist');
+  const grps = {};
+  TU.forEach(t => {
+    if (f && !t.name.includes(f) && !t.en.toLowerCase().includes(f)) return;
+    if (!grps[t.g]) grps[t.g] = []; grps[t.g].push(t);
+  });
+  let html = '';
+  Object.keys(grps).sort().forEach(g => {
+    html += `<div class="grp-lbl">그룹 ${g}</div>`;
+    grps[g].forEach(t => { html += `<div class="t-opt" onclick="selectTeam('${t.en}')"><span style="font-size:20px">${t.flag}</span><span style="flex:1">${t.name}</span><span class="t-rnk">FIFA ${t.rank}위</span></div>`; });
+  });
+  el.innerHTML = html || '<div style="padding:1rem;color:rgba(255,255,255,0.2);font-size:13px;text-align:center">검색 결과 없음</div>';
+}
+function selectTeam(en) {
+  const t = TU.find(x => x.en === en); if (!t) return;
+  if (pickerTarget === 'home') home = t; else away = t;
+  updateAllUI(); closeSheet();
+}
+
+updateAllUI(); renderList('');
+</script>
+</body>
+</html>
