@@ -362,7 +362,7 @@
       <div class="intro-team" onclick="openPicker('home')">
         <span class="intro-flag-lg" id="intro-hf">🇰🇷</span>
         <span class="intro-tname" id="intro-hn">대한민국</span>
-        <span class="intro-trank" id="intro-hr">FIFA 25위</span>
+        
         <span class="intro-edit">탭하여 변경</span>
       </div>
       <div class="intro-vs-col">
@@ -372,7 +372,7 @@
       <div class="intro-team" onclick="openPicker('away')">
         <span class="intro-flag-lg" id="intro-af">🇿🇦</span>
         <span class="intro-tname" id="intro-an">남아공</span>
-        <span class="intro-trank" id="intro-ar">FIFA 56위</span>
+        
         <span class="intro-edit">탭하여 변경</span>
       </div>
     </div>
@@ -526,10 +526,10 @@ function updateAllUI() {
   document.getElementById('bg-af').textContent = away.flag;
   document.getElementById('intro-hf').textContent = home.flag;
   document.getElementById('intro-hn').textContent = home.name;
-  document.getElementById('intro-hr').textContent = 'FIFA ' + home.rank + '위';
+  
   document.getElementById('intro-af').textContent = away.flag;
   document.getElementById('intro-an').textContent = away.name;
-  document.getElementById('intro-ar').textContent = 'FIFA ' + away.rank + '위';
+  
   document.getElementById('intro-hs').textContent = home.name;
   document.getElementById('intro-as').textContent = away.name;
   document.getElementById('sim-hf').textContent = home.flag;
